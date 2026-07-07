@@ -14,16 +14,16 @@ class Author(db.Model):
            Primary key, auto-incrementing
        name : str
            the name of the author
-       birth_date : date
+       birth_date : str
            the birth date of the author
-       date_of_death: date
+       date_of_death: str
            date of death, Null if the author still alive
        """
     __tablename__ = "authors"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
-    birth_date = db.Column(db.Date)
-    date_of_death = db.Column(db.Date)
+    birth_date = db.Column(db.String(10))
+    date_of_death = db.Column(db.String(10))
 
     def __str__(self):
         """
