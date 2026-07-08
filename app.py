@@ -3,7 +3,7 @@ from datetime import date
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 
@@ -43,7 +43,8 @@ def get_book_data(books):
         book_data.append({
             "title": book.title,
             "author": author_name,
-            "cover_url": cover_url
+            "cover_url": cover_url,
+            "book_id": book.id
         })
     return book_data
 
@@ -59,6 +60,7 @@ def index():
     The user can sort how the books are displayed by title and author. By
     default the books are displayed ordered by title.
     """
+    success_delete = request.args.get("success_delete")
     search = request.args.get("search", "")
     sort = request.args.get("sort", "title")
     stmt = (
@@ -76,15 +78,15 @@ def index():
         books = db.session.execute(
             stmt.order_by(Author.name)
         ).all()
-    books = db.session.execute(
-        stmt.order_by(Book.title)
-    ).all()
+    else:
+        books = db.session.execute(
+            stmt.order_by(Book.title)
+        ).all()
     if books:
         book_data = get_book_data(books)
-        return render_template("home.html", books=book_data)
+        return render_template("home.html", books=book_data, success_delete=success_delete), 200
     no_success = f"No books match this search criteria: {search}"
-    return render_template("home.html", no_success=no_success)
-
+    return render_template("home.html", success_delete=success_delete, no_success=no_success), 200
 
 
 @app.route('/add_author', methods=["GET", "POST"])
@@ -120,7 +122,7 @@ def add_author():
             "add_author.html",
             success=f"The author {author.name} has successfully been added to the database"
         ), 200
-    return render_template("add_author.html")
+    return render_template("add_author.html"), 200
 
 
 @app.route('/add_book', methods=["GET", "POST"])
@@ -161,7 +163,42 @@ def add_book():
             authors=authors,
             success=f"The book {book.title} has successfully been added to the database"
         ), 200
-    return render_template("add_book.html", authors=authors)
+    return render_template("add_book.html", authors=authors), 200
+
+
+@app.route('/book/<int:book_id>/delete', methods=["POST"])
+def delete_book(book_id):
+    """Deletes a book by its ID.
+
+        Searches in the database for a book matching the provided ID.
+        If found, the book is removed from the database, and the user is
+        redirected to the homepage and a successful message is displayed.
+
+        Args:
+            book_id (int): The id of the book to delete.
+
+        Returns:
+            It the book with the given id exists, the book entry is deleted
+            from the database.
+            Redirects to the home page with a success or
+            error message in the query parameters.
+        """
+
+    book_to_delete = db.session.execute(db.select(Book).where(Book.id == book_id)).scalar_one_or_none()
+    author_id_book_to_delete = db.session.execute(db.select(Book.author_id).where(Book.id == book_id)).scalar_one_or_none()
+    author_to_delete = db.session.execute(db.select(Author).where(Author.id == author_id_book_to_delete)).scalar_one_or_none()
+    if book_to_delete:
+        db.session.delete(book_to_delete)
+        db.session.commit()
+        remaining_books = db.session.execute(
+            db.select(Book).where(Book.author_id == author_id_book_to_delete)
+        ).scalars()
+        if remaining_books is None:
+            db.session.delete(author_to_delete)
+            db.session.commit()
+            return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} and the author {author_to_delete.name} have been successfully deleted ."))
+        return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} has been successfully deleted ."))
+    return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} was not found."))
 
 
 # with app.app_context():

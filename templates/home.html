@@ -6,6 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
   </head>
   <body>
+    {% if success_delete %}
+        <p>{{ success_delete }}</p>
+    {% endif %}
     <div>
         <form action="/" method="GET">
             <label for="search">Search books:</label>
@@ -33,8 +36,12 @@
       {% else %}
         <p>No cover available.</p>
       {% endif %}
+        <form action="{{ url_for('delete_book', book_id=book['book_id']) }}" method="POST">
+            <button type="submit">Delete Book</button>
+        </form>
     </div>
     {% endfor %}
+
   {% if no_success %}
     <p>{{ no_success }}</p>
   {% endif %}
