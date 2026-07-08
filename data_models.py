@@ -15,7 +15,7 @@ class Author(db.Model):
        name : str
            the name of the author
        birth_date : str
-           the birth date of the author
+           the birthdate of the author
        date_of_death: str
            date of death, Null if the author still alive
        """
@@ -35,7 +35,8 @@ class Author(db.Model):
         """
         Return a readable string that represents the author
         """
-        return f"<Author {self.id}: {self.name}, birthdate: {self.birth_date}, date of death: {self.date_of_death}>"
+        return (f"<Author {self.id}: {self.name}, birthdate: {self.birth_date},"
+                f" date of death: {self.date_of_death}>")
 
 
 class Book(db.Model):
@@ -69,13 +70,12 @@ class Book(db.Model):
         """
         Return a user-friendly string that represents the author
         """
-        return f"Books's title: {self.title} (Book ID: {self.id}"
+        return f"Books's title: {self.title} (Book ID: {self.id})"
 
     def __repr__(self):
         """
         Return a readable string that represents the author
         """
-        return f"<Book {self.id}: {self.title}, ISBN: {self.isbn}, publication year: {self.publication_year} (Author ID: {self.author_id})>"
-
-
-
+        return (f"<Book {self.id}: {self.title}, ISBN: {self.isbn},"
+                f" publication year: {self.publication_year}"
+                f" (Author ID: {self.author_id})>")

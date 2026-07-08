@@ -1,15 +1,77 @@
 import os
-from data_models import db, Author, Book
 from datetime import date
-from flask import Flask, render_template, request, redirect
+
+import requests
+from dotenv import load_dotenv
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 
+from data_models import db, Author, Book
+
+load_dotenv()
+API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY")
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data/library.sqlite')}"
 db.init_app(app)
+
+
+def get_book_data(books):
+    """
+    Given the Isbn, requests from the API google books the cover url.
+    creates a list with title, author (from books) and cover url (from API).
+    :param
+        books: A list of tuples (SQLAlchemy Rows) of a Book object
+         and author name (string) in the order requested by the user.
+    :return:
+        book_data: A list with the title, author and cover url
+    """
+    book_data = []
+    for book, author_name in books:
+        response = requests.get(
+            f"https://www.googleapis.com/books/v1/volumes?q=isbn:{book.isbn}&key={API_KEY}",
+            timeout=10
+        )
+        data = response.json()
+        cover_url = None
+        if "items" in data:
+            volumen_info = data.get("items")[0].get("volumeInfo")
+            if "imageLinks" in volumen_info:
+                cover_url = volumen_info.get("imageLinks").get("thumbnail")
+        book_data.append({
+            "title": book.title,
+            "author": author_name,
+            "cover_url": cover_url
+        })
+    return book_data
+
+
+@app.route('/', methods=["GET"])
+def index():
+    """
+    renders the home.html with the books data title, author and cover.
+    It gets the cover-url through the google books API
+    Note: Sometimes it is very slow and also the request sometimes fails.
+    Please try again in that case.
+
+    The user can sort how the books are displayed by title and author. By
+    default the books are displayed ordered by title.
+    """
+    sort = request.args.get("sort")
+    if sort == "author":
+        books = db.session.execute(
+            db.select(Book, Author.name)
+            .join(Author).order_by(Author.name)
+        ).all()
+    else:
+        books = db.session.execute(
+            db.select(Book, Author.name)
+            .join(Author).order_by(Book.title)
+        ).all()
+    book_data = get_book_data(books)
+    return render_template("home.html", books=book_data)
 
 
 @app.route('/add_author', methods=["GET", "POST"])
@@ -47,6 +109,7 @@ def add_author():
         ), 200
     return render_template("add_author.html")
 
+
 @app.route('/add_book', methods=["GET", "POST"])
 def add_book():
     """Adds a new book to the database.
@@ -65,11 +128,14 @@ def add_book():
             publication_year = int(request.form["publication_year"])
         except ValueError:
             return {"error": "Please enter a valid year."}, 400
+        author_id = request.form.get("author_id")
+        if author_id == "":
+            author_id = None
         book = Book(
             title=request.form["title"],
-            isbn=request.form["isbn"],
+            isbn=request.form["isbn"].replace("-", "").replace(" ", ""),
             publication_year=publication_year,
-            author_id=request.form["author_id"]
+            author_id=author_id
         )
         db.session.add(book)
         try:

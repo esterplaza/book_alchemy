@@ -6,9 +6,26 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
   </head>
   <body>
-
+    <div>
+      <form action="/" method="GET">
+        <label for="sort">Sort by:</label>
+        <select name="sort" id="sort">
+          <option value="title">Title</option>
+          <option value="author">Author</option>
+        </select>
+      <input type="submit" value="sort">
+</form>
+    </div>
     {% for book in books %}
-    <div> <h3>{{ book.title }}</h3>
+    <div>
+      <h3>Title: {{ book["title"] }}, Author: {{book["author"] }}</h3>
+    </div>
+    <div>
+      {% if book["cover_url"] %}
+        <img src="{{ book['cover_url'] }}" alt="Cover image of {{ book['title'] }}">
+      {% else %}
+        <p>No cover available.</p>
+      {% endif %}
     </div>
     {% endfor %}
 

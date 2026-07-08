@@ -15,8 +15,9 @@
   <label for="publication_year">Publication year:</label>
   <input type="number" id="publication_year" name="publication_year" min="500" max="3000" required title="Please enter a four-digit year (e.g. 2024) "><br><br>
   <label for="author">Select the Author:</label>
-  <select id="author" name="author_id" required>
+  <select id="author" name="author_id">
       <option value="">-- Please choose an author --</option>
+      <option value="">unknown author</option>
     {% for author in authors %}
       <option value="{{ author.id }}">{{ author.name }}</option>
     {% endfor %}
