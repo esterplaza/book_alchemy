@@ -59,19 +59,32 @@ def index():
     The user can sort how the books are displayed by title and author. By
     default the books are displayed ordered by title.
     """
-    sort = request.args.get("sort")
+    search = request.args.get("search", "")
+    sort = request.args.get("sort", "title")
+    stmt = (
+        db.select(Book, Author.name)
+        .outerjoin(Author)
+    )
+    if search:
+        stmt = stmt.where(
+            db.or_(
+                Book.title.ilike(f"%{search}%"),
+                Author.name.ilike(f"%{search}%")
+            )
+        )
     if sort == "author":
         books = db.session.execute(
-            db.select(Book, Author.name)
-            .join(Author).order_by(Author.name)
+            stmt.order_by(Author.name)
         ).all()
-    else:
-        books = db.session.execute(
-            db.select(Book, Author.name)
-            .join(Author).order_by(Book.title)
-        ).all()
-    book_data = get_book_data(books)
-    return render_template("home.html", books=book_data)
+    books = db.session.execute(
+        stmt.order_by(Book.title)
+    ).all()
+    if books:
+        book_data = get_book_data(books)
+        return render_template("home.html", books=book_data)
+    no_success = f"No books match this search criteria: {search}"
+    return render_template("home.html", no_success=no_success)
+
 
 
 @app.route('/add_author', methods=["GET", "POST"])
