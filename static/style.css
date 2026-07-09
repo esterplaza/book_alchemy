@@ -1,0 +1,83 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #F5F5F5;
+    padding: 20px;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    vertical-align: center;
+}
+
+.title {
+    background-color: cornflowerblue;
+    height: 50px;
+    padding: 5px;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 700px;
+}
+
+.book_title {
+    flex:1;
+    max-width: 600px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-content: center;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 700px;
+}
+
+.card {
+    background-color: lightblue;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 20px;
+}
+
+.author {
+    height: 20px;
+    padding: 5px;
+    display: flex;
+    align-items:flex-start;
+    flex-direction: column;
+}
+.delete_button {
+    margin-left: auto;
+    display: flex;
+    align-items:center;
+    justify-content: flex-end;
+    padding-right: 20px;
+}
+
+.button {
+    padding: 10px;
+}
+
+button {
+    border-radius: 4px;
+}
+
+.cover {
+    padding: 20px;
+}
+
+#author_details {
+    text-decoration: underline;
+}

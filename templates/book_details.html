@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Book_details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="book_title">
+                <h3>Title: {{ book.title }}</h3>
+            </div>
+        </div>
+        <div class="author">
+            <h5>ISBN: {{ book.isbn }}</h5>
+            <h5>Publication year: {{ book.publication_year }}</h5>
+            <h5 id="author_details">Author: {{ author.name }}</h5>
+            <h5>Birthdate: {{ author.birth_date }}</h5>
+            {% if author.date_of_death %}
+                <h5>Date of death: {{ author.date_of_death }}</h5>
+            {% endif %}
+            <a href="{{ url_for('index') }}">Home</a>
+        </div>
+    </div>
+</body>
+</html>

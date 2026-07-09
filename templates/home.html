@@ -4,44 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
+  <div class="title">
+    <h1>Library</h1>
+  </div>
     {% if success_delete %}
         <p>{{ success_delete }}</p>
     {% endif %}
-    <div>
+    <div class="button">
         <form action="/" method="GET">
             <label for="search">Search books:</label>
             <input type="text" id="search" name="search">
             <button type="submit">Search</button>
         </form>
     </div>
-    <div>
+    <div class="button">
       <form action="/" method="GET">
         <label for="sort">Sort by:</label>
         <select name="sort" id="sort">
           <option value="title">Title</option>
           <option value="author">Author</option>
         </select>
-      <input type="submit" value="sort">
-</form>
-    </div>
-    {% for book in books %}
-    <div>
-      <h3>Title: {{ book["title"] }}, Author: {{book["author"] }}</h3>
-    </div>
-    <div>
-      {% if book["cover_url"] %}
-        <img src="{{ book['cover_url'] }}" alt="Cover image of {{ book['title'] }}">
-      {% else %}
-        <p>No cover available.</p>
-      {% endif %}
-        <form action="{{ url_for('delete_book', book_id=book['book_id']) }}" method="POST">
-            <button type="submit">Delete Book</button>
+        <button type="submit">Sort</button>
         </form>
     </div>
-    {% endfor %}
+    <div class="container">
+    {% for book in books %}
+        <div class="card">
+            <div class="book_title">
+                <h3>
+                    <a href="{{ url_for('book_details', book_id=book['book_id']) }}">
+                                Title: {{ book["title"] }}
+                    </a>
+                </h3>
+            </div>
+            <div class="delete_button">
+                <form action="{{ url_for('delete_book', book_id=book['book_id']) }}" method="POST"><button type="submit">Delete Book</button>
+                </form>
+            </div>
+        </div>
+        <div class="author">
+            <h5>Author: {{book["author"] }}</h5>
+        </div>
+        <div class="cover">
+          {% if book["cover_url"] %}
+            <img src="{{ book['cover_url'] }}" alt="Cover image of {{ book['title'] }}">
+          {% else %}
+            <p>No cover available.</p>
+          {% endif %}
 
+        </div>
+        {% endfor %}
+    </div>
   {% if no_success %}
     <p>{{ no_success }}</p>
   {% endif %}

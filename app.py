@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data
 db.init_app(app)
 
 
-def get_book_data(books):
+def get_books_data(books):
     """
     Given the Isbn, requests from the API google books the cover url.
     creates a list with title, author (from books) and cover url (from API).
@@ -44,7 +44,7 @@ def get_book_data(books):
             "title": book.title,
             "author": author_name,
             "cover_url": cover_url,
-            "book_id": book.id
+            "book_id": book.id,
         })
     return book_data
 
@@ -83,7 +83,7 @@ def index():
             stmt.order_by(Book.title)
         ).all()
     if books:
-        book_data = get_book_data(books)
+        book_data = get_books_data(books)
         return render_template("home.html", books=book_data, success_delete=success_delete), 200
     no_success = f"No books match this search criteria: {search}"
     return render_template("home.html", success_delete=success_delete, no_success=no_success), 200
@@ -185,20 +185,46 @@ def delete_book(book_id):
         """
 
     book_to_delete = db.session.execute(db.select(Book).where(Book.id == book_id)).scalar_one_or_none()
-    author_id_book_to_delete = db.session.execute(db.select(Book.author_id).where(Book.id == book_id)).scalar_one_or_none()
-    author_to_delete = db.session.execute(db.select(Author).where(Author.id == author_id_book_to_delete)).scalar_one_or_none()
+    author_to_delete = db.session.execute(db.select(Author).where(Author.id == book_to_delete.author_id)).scalar_one_or_none()
     if book_to_delete:
         db.session.delete(book_to_delete)
         db.session.commit()
         remaining_books = db.session.execute(
-            db.select(Book).where(Book.author_id == author_id_book_to_delete)
-        ).scalars()
+            db.select(Book).where(Book.author_id == book_to_delete.author_id)
+        ).scalars().first()
         if remaining_books is None:
             db.session.delete(author_to_delete)
             db.session.commit()
-            return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} and the author {author_to_delete.name} have been successfully deleted ."))
-        return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} has been successfully deleted ."))
-    return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} was not found."))
+            return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} and the author {author_to_delete.name} have been deleted successfully."))
+        return redirect(url_for('index', success_delete=f"The book {book_to_delete.title} has been deleted successfully."))
+    return redirect(url_for('index', success_delete=f"The book with the id {book_id} was not found."))
+
+
+@app.route("/book/<int:book_id>", methods=["GET"])
+def book_details(book_id):
+    """Renders a book details page with all the information
+     that is included in the database of the book and the author.
+
+    Searches in the database for a book matching the provided ID and
+     its author.
+    If found, the details page is rendered, if not an error message is
+    displayed.
+    Args:
+        book_id (int): The id of the book to delete.
+
+    Returns:
+        It the book with the given id exists, the book entry is deleted
+        from the database.
+        Redirects to the home page with a success or
+        error message in the query parameters.
+    """
+    result = db.session.execute(
+        db.select(Book, Author).outerjoin(Author).where(Book.id == book_id)
+    ).one_or_none()
+    if result is None:
+        return f"The book with id {book_id} was not found", 400
+    book, author = result
+    return render_template("book_details.html", book=book, author=author)
 
 
 # with app.app_context():
