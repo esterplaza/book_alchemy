@@ -70,12 +70,29 @@ ___
 
 ___
 
-1. Clone the repository:
+1. Get a free API key at https://developers.google.com/books
+2. Clone the repository:
 
 ```
 git clone https://github.com/esterplaza/book_alchemy.git
 ```
 
+3. Install requirements:
+
+```
+pip install -r requirements.txt
+```
+
+4. Enter your API KEY.
+
+This project requires an API key to access the cover data of the books.
+Reate a .env file in the project root directory:
+
+```
+GOOGLE_BOOKS_API_KEY=your_api_key_here_without_quotes
+```
+Replace your_api_key_here_without_quotes with your own API key.
+The .env file is not included in the repository for security reasons.
 
 5. Change git remote url to avoid accidental pushes to base project
 
@@ -84,11 +101,11 @@ git clone https://github.com/esterplaza/book_alchemy.git
    git remote -v # confirm the changes
 ```
 
-### Required Packages
+## **External Services**
 
-```
-pip install requests flask json dotenv flask_sqlalchemy sqlalchemy.exc
-```
+This project retrieves the book cover information using Google Books API.
+Google Books API website: https://developers.google.com/books
+Movie data is fetched when adding new books and then stored locally in an SQLite database.
 
 ## **Running the Application**
 
@@ -99,7 +116,25 @@ Start the program:
 ```
 python add.py
 ```
+## **Database Design**
 
+Authors and books are stored locally using SQLite.
+
+The database contains information such as:
+
+Authors:
+
+- Name
+- birthdate
+- date of death
+
+Books:
+
+- ISBN
+- Title
+- Publication year
+- Cover URL
+- Author id
 
 ## **Usage**
 
@@ -110,7 +145,7 @@ ___
 
 ___
 
-- Built using Flask.
+- Built using Flask, SQLAlchemy.
 - Cover Information from Google Books API
 
 ## **Contact**
