@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import date
 
 import requests
@@ -18,6 +19,35 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data
 db.init_app(app)
 
 
+def get_cover_url(isbn):
+    """
+    Get the cover URL from Google Books API.
+    Retries up to 4 times if Google returns a 503 error.
+    Returns None if no cover is available or the request fails.
+    """
+    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&key={API_KEY}"
+    attempts = 4
+    for attempt in range(1, attempts):
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 503:
+                if attempt < (attempts - 1):
+                    time.sleep(5)
+                    continue
+                return None
+            response.raise_for_status()
+            data = response.json()
+            items = data.get("items", [])
+            if items:
+                volume_info = items[0].get("volumeInfo", {})
+                image_links = volume_info.get("imageLinks", {})
+                return image_links.get("thumbnail")
+            return None
+        except (requests.Timeout, requests.RequestException, KeyError, IndexError, TypeError):
+            return None
+    return None
+
+
 def get_books_data(books):
     """
     Given the Isbn, requests from the API google books the cover url.
@@ -30,20 +60,10 @@ def get_books_data(books):
     """
     book_data = []
     for book, author_name in books:
-        response = requests.get(
-            f"https://www.googleapis.com/books/v1/volumes?q=isbn:{book.isbn}&key={API_KEY}",
-            timeout=10
-        )
-        data = response.json()
-        cover_url = None
-        if "items" in data:
-            volumen_info = data.get("items")[0].get("volumeInfo")
-            if "imageLinks" in volumen_info:
-                cover_url = volumen_info.get("imageLinks").get("thumbnail")
         book_data.append({
             "title": book.title,
             "author": author_name,
-            "cover_url": cover_url,
+            "cover_url": book.cover_url,
             "book_id": book.id,
         })
     return book_data
@@ -146,10 +166,12 @@ def add_book():
         author_id = request.form.get("author_id")
         if author_id == "":
             author_id = None
+        isbn = request.form["isbn"].replace("-", "").replace(" ", "")
         book = Book(
             title=request.form["title"],
-            isbn=request.form["isbn"].replace("-", "").replace(" ", ""),
+            isbn=isbn,
             publication_year=publication_year,
+            cover_url=get_cover_url(isbn),
             author_id=author_id
         )
         db.session.add(book)
@@ -227,8 +249,8 @@ def book_details(book_id):
     return render_template("book_details.html", book=book, author=author)
 
 
-# with app.app_context():
-#     db.create_all()
+with app.app_context():
+    db.create_all()
 
 
 if __name__ == '__main__':
