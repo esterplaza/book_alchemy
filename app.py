@@ -249,8 +249,8 @@ def book_details(book_id):
     return render_template("book_details.html", book=book, author=author)
 
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 
 if __name__ == '__main__':
